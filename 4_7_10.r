@@ -29,3 +29,18 @@ max_year = max(test_year)
 
 
 # Will continue data exploration next time.
+pairs(Weekly)
+
+
+# b)  Use the full data set to perform a logistic regression with Direction
+#     as the response and the five lag variable plus Volume as predictors
+#     Use the summary function to print the results.  
+#     Do any of the predictors appear to be statistically significant?
+#     If so, which ones?
+
+glm.weekly = glm(Direction ~ Lag1 + Lag2 + Lag3 + Lag4 + Lag5 + Volume, data = Weekly, family = binomial)
+summary(glm.weekly)
+
+# Only the intercept, which is meaningless, and Lag2 (p = .0296) are statistically significant.
+
+# c
