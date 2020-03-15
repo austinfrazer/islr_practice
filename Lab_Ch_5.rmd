@@ -1,3 +1,8 @@
+---
+output:
+  html_document: default
+  pdf_document: default
+---
 # Chaper 5 Lab: Cross-Validation and the Bootstrap
 
 # The Validation Set Approach
