@@ -3,7 +3,6 @@
 
 
 library(ISLR)
-fix(College)
 
 # a)  Split the data into a test set and a training set.
 
@@ -29,3 +28,27 @@ print(paste0("The mean squared error of the linear model is "
 
 # (c)  Fit a ridge regression on the model on the training set, with lambda chosen
 # by cross-validation. Report the test error obtained.
+
+library(glmnet)
+
+college_train = College[train_obs, ]
+college_test  = College[-train_obs, ]
+
+train_matrix  = model.matrix(Apps ~ ., data = college_train)
+test_matrix   = model.matrix(Apps ~ ., data = college_test)
+
+grid = 10 ^ seq(10, -2, length = 100)
+college_ridge = cv.glmnet(train_matrix,
+                          college_train[ , "Apps"],
+                          alpha = 0,
+                          lambda = grid,
+                          thresh = 1e-12)
+lambda_best   = college_ridge$lambda.min
+
+ridge_pred    = predict(college_ridge, newx = test_matrix, s = lambda_best)
+
+MSE_college_ridge = mean((college_test[ , "Apps"] - ridge_pred)^2)
+
+print(paste0("The mean squared error of the ridge regression model is "
+             , round(MSE_college_ridge, 1)
+             , "!"))
