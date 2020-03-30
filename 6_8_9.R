@@ -10,22 +10,22 @@ fix(College)
 path = choose.dir()
 source(paste0(path, "\\my_sample.R"))
 
-MY_DATA         = College
-TRAIN_PROPORTION = .5          # [0, 1)
+MY_DATA           = College
+TRAIN_PROPORTION  = .5          # [0, 1)
 
-test_obs = my_sample(MY_DATA, TEST_PROPORTION)
-train_obs = nrow(MY_DATA)
+train_obs = my_sample(MY_DATA, TRAIN_PROPORTION)
+
 
 # b) Fit a linear model using least squares on the training set,
 # and report the test error obtained.
 
-lm(Apps ~ ., data = MY_DATA, subset = train)
-names(MY_DATA)
-MY_DATA[-test_obs, ]
-MY_DATA[test_obs, ]
+college_lm = lm(Apps ~ ., data = MY_DATA, subset = train_obs)
 
-train=sample(392,196)
-train
+attach(College)
+MSE_college_lm = mean((Apps - predict(college_lm, College))[-train_obs]^2)
+print(paste0("The mean squared error of the linear model is "
+             , round(MSE_college_lm, 1)
+             , "!"))
 
-lm(mpg~horsepower, data=Auto, subset = train)
-lm(mpg ~ ., data=Auto, subset = train)
+# (c)  Fit a ridge regression on the model on the training set, with lambda chosen
+# by cross-validation. Report the test error obtained.
