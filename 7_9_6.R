@@ -20,11 +20,6 @@ round(coef(summary(fit.20)), 3)
 ### But, the question was about using cross-validation.
 
 
-# b) Fit a step function to predict wage using age, and perform
-#   cross validation to choose the optimal number of cuts.  Make
-#   a plot of the fit obtained.
-
-
 path = choose.dir()
 source(paste0(path, "\\my_sample.R"))
 
@@ -70,4 +65,66 @@ average_mse_big
 which.min(average_mse_big)
 
 
-# I could also try the k-fold cross validation technique given on page 193.  I will do so tonight. (And will erase the I will do so at that time.  And this.)
+# I could also try the k-fold cross validation technique given on page 193.
+#  I went ahead and expanded it by repeating it 10 times with 10 different random seeds.
+
+num_resamples = 10
+num_folds     = 10
+cv.error = matrix(0, num_resamples, num_folds)
+for (j in 1:1000){
+  seed_number = round(runif(1) * 2147483647, 0)     #Should be able to get all seeds except probably 0.  There are 2^32 seeds.
+  set.seed(seed_number)
+  print(paste0("Now using seed number, ", seed_number))
+for (i in 1:10){
+  glm.fit = glm(wage ~ poly(age, i), data = Wage)
+  cv.error[j, i] = cv.glm(Wage, glm.fit, K = num_folds)$delta[1]
+}}
+cv.error
+average_cv.error = apply(cv.error, MARGIN = 2, FUN = mean)
+average_cv.error
+which.min(average_cv.error)
+
+
+# b) Fit a step function to predict wage using age, and perform
+#   cross validation to choose the optimal number of cuts.  Make
+#   a plot of the fit obtained.
+
+#  Took from https://stackoverflow.com/questions/42190337/cross-validating-step-functions-in-r.
+#   Found it when just looking for how to do cross-validation with a step function.
+library(boot)
+library(ISLR)
+data(Wage) # using attach is a bad practice
+set.seed(5082)
+num_cuts = 12
+cv.error <- rep (0, num_cuts)
+for (i in 3:num_cuts){
+  Wage$tmp <- cut(Wage$age, i)
+  step.fit = glm(wage ~ tmp, data = Wage)
+  cv.error[i] <- cv.glm(Wage ,step.fit, K= 10)$delta[1]
+}
+cv.error
+cv.error[3:length(cv.error)]
+print(paste0("The optimal number of cuts is:  ", which.min(cv.error[3:length(cv.error)]) + 2))
+
+
+# Updating method from stackoverflow with something one of my techniques in part a.
+
+num_resamples = 100
+num_cuts = 12
+num_folds = 10
+
+cv.error = matrix(0, num_resamples, num_cuts)
+for (j in 1:num_resamples){
+  seed_number = round(runif(1) * 2147483647, 0)     #Should be able to get all seeds except probably 0.  There are 2^32 seeds.
+  set.seed(seed_number)
+  print(paste0("Now using seed number, ", seed_number))
+  for (i in 3:num_cuts){
+    Wage$tmp <- cut(Wage$age, i)
+    step.fit = glm(wage ~ tmp, data = Wage)
+    cv.error[j, i] <- cv.glm(Wage ,step.fit, K = num_folds)$delta[1]
+  }}
+
+useful_cv.error = cv.error[ , 3:ncol(cv.error)]
+average_cv.error = apply(useful_cv.error, MARGIN = 2, FUN = mean)
+average_cv.error
+print(paste0("The optimal number of cuts is:  ", (which.min(average_cv.error) + 2)))
