@@ -83,8 +83,9 @@ round(all_rss, 3)
 # degree for the polynomial, and explain your results.
 
 ### Reused the third method I used in 7.9.6
-# I could also try the k-fold cross validation technique given on page 193.
+# The k-fold cross validation technique given on page 193.
 #  I went ahead and expanded it by repeating it 10 times with 10 different random seeds.
+library(boot)
 
 num_resamples = 10
 num_folds     = 10
@@ -104,23 +105,65 @@ best_poly_order = which.min(average_cv.error)
 print(paste0("I should choose a level ", best_poly_order, " order polynomial."))
 
 
+dev.off()
+plot(1:10, average_cv.error, xlab = "Degree", ylab = "CV error", 
+     type = "l", pch = 20, lwd = 2)
+title(paste0("Error by Degree"), outer = T)
+
 
 # (d) Use the bs() function to fit a regression spline to predict nox
 # using dis. Report the output for the fit using four degrees of
 # freedom. How did you choose the knots? Plot the resulting fit.
 
+library(splines)
+fit = lm(nox ~ bs(dis, df = 4, knots = c(4, 7, 11)), data = Boston)
+summary(fit)
 
+pred = predict(fit, list(dis = dis.grid))
+plot(nox ~ dis, data = Boston, col = "green")
+lines(dis.grid, pred, col = "red", lwd = 2)
 
-
+# I chose the notes after the manner of the solutions key.
 
 # (e) Now fit a regression spline for a range of degrees of freedom, and
 # plot the resulting fits and report the resulting RSS. Describe the
 # results obtained.
 
 
+all_cv = rep(NA, 16)
+for (i in 3:16) {
+  lm_fit = lm(nox ~ bs(dis, df = i), data = Boston)
+  all_cv[i] = sum(lm_fit$residuals^2)
+}
+all_cv[-c(1, 2)]
 
+dev.off()
+plot(3:16, all_cv[-c(1, 2)], xlab = "Degrees of Freedom",
+     ylab = "RSS", type = "l", pch = 20, lwd = 2)
+title(paste0("RSS by degrees of freedom"), outer = T)
 
+print(paste0("  The best fit (lowest RSS) comes from the model with ",
+  which.min(all_cv[-c(1, 2)]) + 2,
+  " degrees of freedom."))
 
 # (f) Perform cross-validation or another approach in order to select
 # the best degrees of freedom for a regression spline on this data.
 # Describe your results.
+
+
+num_folds = 10
+cv_error = rep(NA, 16)
+for (i in 3:16){
+  glm_fit = glm(nox ~ bs(dis, df = i), data = Boston)
+  cv_error[i] = cv.glm(Boston, glm_fit, K = num_folds)$delta[1]
+}
+all_cv[-c(1, 2)]
+relevant_cv_error = cv_error[-c(1, 2)]
+relevant_cv_error
+best_df = which.min(relevant_cv_error) + 2
+
+dev.off()
+plot(3:16, relevant_cv_error, xlab = "Degree", ylab = "CV error", 
+     type = "l", pch = 20, lwd = 2)
+title(paste0("Error by Degree"), outer = T)
+print(paste0("I should choose a the ", best_df, "-df model."))
