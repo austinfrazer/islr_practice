@@ -40,7 +40,7 @@ test_output = summary(tree_carseats)
 
 plot(tree_carseats)
 text(tree_carseats, pretty = 0)
-print(paste0('These variable is actually used:  ', test_output$used, "."))
+print(paste0('This variable is actually used:  ', test_output$used, "."))
 
 yhat_tree = predict(tree_carseats, newdata = Carseats[-train, ])
 mse_tree = mean((yhat_tree - Carseats[-train, 'Sales']) ^ 2)
@@ -51,6 +51,24 @@ print(paste0("The MSE that I obtain is:  ", round(mse_tree, 3), "."))
 # (c) Use cross-validation in order to determine the optimal level of
 #     tree complexity.  Does pruning the tree improve the test MSE?
 
+
+set.seed(3)
+cv.carseats = cv.tree(tree_carseats, FUN = prune.tree)
+names(cv.carseats)
+#cv.carseats
+
+
+par(mfrow = c(1, 2))
+plot(cv.carseats$size, cv.carseats$dev, type = "b")
+plot(cv.carseats$k, cv.carseats$dev, type = "b")
+print(paste0("The ideal number of terminal nodes ('size') is ", 
+             cv.carseats$size[which.min(cv.carseats$dev)], "."))
+print(paste0("The ideal value of the cost-complexity parameter, ",
+             "k, is ", cv.carseats$k[which.min(cv.carseats$dev)], "."))
+
+print(paste0("Pruning the tree does seem to give some slight improvements at first.  ",
+      "After the first six cuts, there is a period of six or so more cuts that form a basin.",
+      "  Pruning beyond that point leads to rapidly increasing error."))
 
 # (d) Use the bagging approach in order to analyze this data.  What
 #     test MSE do you obtain?  Use the importance() function to
