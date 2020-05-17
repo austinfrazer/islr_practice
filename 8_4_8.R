@@ -8,6 +8,7 @@
 
 library(tree)
 library(ISLR)
+library(randomForest)
 
 # (a) Split the data set into a training set and a test set.
 
@@ -74,185 +75,98 @@ print(paste0("Pruning the tree does seem to give some slight improvements at fir
 #     test MSE do you obtain?  Use the importance() function to
 #     determine which variables are most important.
 
+bag_carseats = randomForest(Sales ~ .,
+                            data = Carseats,
+                            subset = train,
+                            mtry = 10,
+                            importance = TRUE)
+
+bag_carseats
+
+yhat_bag = predict(bag_carseats, newdata = carseats_test)
+
+# Just added these two steps to make better axis-titles.
+predicted_sales = yhat_bag
+actual_sales = t(carseats_test['Sales'])
+
+plot(predicted_sales, actual_sales)
+abline(0, 1)
+mean((yhat_bag - t(carseats_test['Sales']))^2)
+
+# Just verifying that the aliases were done correctly.  Number should be the same as the above.
+mean((predicted_sales - actual_sales)^2)
+
+print("Here is the importance readout.")
+importance(bag_carseats)
+
+# (e) Use random forests to analyze this data.  What test MSE do you
+#     obtain?  Use the importance() function to determine which variables
+#     are most important.  Describe the effect of m, the number of
+#     variables considered at each split, on the error rate obtained.
 
 
+# First pass, just repeating what I did for the bagged model, but with 3 parameters
+#  instead of all 10.
+rf_carseats = randomForest(Sales ~ .,
+                            data = Carseats,
+                            subset = train,
+                            mtry = 3,
+                            importance = TRUE)
+
+rf_carseats
+
+yhat_rf = predict(rf_carseats, newdata = carseats_test)
+
+# Just added these two steps to make better axis-titles.
+predicted_sales = yhat_rf
+actual_sales = t(carseats_test['Sales'])
+
+plot(predicted_sales, actual_sales)
+abline(0, 1)
+mean((yhat_rf - t(carseats_test['Sales']))^2)
+
+# Just verifying that the aliases were done correctly.
+#  Number should be the same as the above.
+mean((predicted_sales - actual_sales)^2)
 
 
+# Repeating the same exercise, but with all possible number of variable choices (1, ..., p)
+#  Also choosing 10 test - train splits of the data to make results more generalizable.
+report_matrix = matrix(0, 10, 10)
 
-# Relevant section from Ch. 8 lab.
-
-
-
-library(tree)
-library(ISLR)
-attach(Carseats)
-High = ifelse(Sales <= 8, "No", "Yes")
-Carseats = data.frame(Carseats, High)
-tree.carseats = tree(High ~ .  -  Sales, Carseats)
-summary(tree.carseats)
-
-
-
-plot(tree.carseats)
-text(tree.carseats, pretty = 0)
-
-
-
-tree.carseats
+for (i in 1:10){
+  set.seed(i)
+  train = my_sample(Carseats)
+  carseats_test = Carseats[-train, ]
+  carseats_train = Carseats[train, ]
+for (j in 1:10){
+    rf_carseats = randomForest(Sales ~ .,
+                               data = Carseats,
+                               subset = train,
+                               mtry = i,
+                               importance = TRUE)
+    yhat_rf = predict(rf_carseats, newdata = carseats_test)    
+    report_matrix[i, j] = mean((yhat_rf - t(carseats_test['Sales']))^2)
+    print(paste0("I am on row ", i, " of 10 and column ", j, " of 10."))
+}}
 
 
-
-set.seed(2)
-train = sample(1:nrow(Carseats), 200)
-Carseats.test = Carseats[ - train, ]
-High.test = High[ - train]
-tree.carseats = tree(High ~ . - Sales, Carseats, subset = train)
-tree.pred = predict(tree.carseats, Carseats.test, type = "class")
-#These lines below redesigned by me because the hardcoded values, (86 + 57)/200, were no longer relevant.
-my_tree  =  table(tree.pred, High.test)
-my_tree
-(my_tree[1, 1] + my_tree[2, 2]) / sum(my_tree)
-
-
-
-set.seed(3)
-cv.carseats = cv.tree(tree.carseats, FUN = prune.misclass)
-names(cv.carseats)
-cv.carseats
-
-
-
-par(mfrow = c(1, 2))
-plot(cv.carseats$size, cv.carseats$dev, type = "b")
-plot(cv.carseats$k, cv.carseats$dev, type = "b")
-
-
-
-prune.carseats = prune.misclass(tree.carseats, best = 9)
-plot(prune.carseats)
-text(prune.carseats, pretty = 0)
-
-
-
-tree.pred = predict(prune.carseats, Carseats.test, type = "class")
-# Edited code below to update.  Fixed values, (94 + 60)/200, were incorrect, 
-my_tree  =  table(tree.pred, High.test)
-my_tree
-(my_tree[1, 1] + my_tree[2, 2]) / sum(my_tree)
-
-
-
-prune.carseats = prune.misclass(tree.carseats, best = 15)
-plot(prune.carseats)
-text(prune.carseats, pretty = 0)
-tree.pred = predict(prune.carseats, Carseats.test, type = "class")
-# Edited code below to update.  Fixed values, (86 + 62)/200, were incorrect, 
-table(tree.pred, High.test)
-my_tree  =  table(tree.pred, High.test)
-my_tree
-(my_tree[1, 1] + my_tree[2, 2]) / sum(my_tree)
-
-
-
-
-
-
-# For other computers, uncomment these lines to get it to work
-#path = choose.dir()
-#source(paste0(path, "\\my_sample.R"))
-
-# On work computer, 
-path <- 'P:\\AccountFinance\\Planning\\Private\\Strategy&Loyalty\\Users\\Austin Frazer\\Data_Science_Practice\\ISLR_Labs\\islr_practice'
-source(paste0(path, "\\my_sample.R"))
-
-library(MASS)
-library(randomForest)
-
-
-# I'll use a fixed seed so I have the same sample.  (I could loop through this later so I have 10 or 100 samples or so.)
-set.seed(1)
-train = my_sample(Boston)
-boston.test = Boston[ - train, "medv"]
-
-report_matrix = matrix(0, 13, 200)
-for (i in 1:13){
-  for (j in 1:200){
-    bag.boston=randomForest(medv~.,data=Boston,subset=train,mtry=i,ntree=(j*25))
-    yhat.bag = predict(bag.boston,newdata=Boston[-train,])    
-    report_matrix[i, j] = mean((yhat.bag-boston.test)^2)
-    print(paste0("I am on row ", i, " of 13 and column ", j, " of 200."))
-  }}
-
-
+report_matrix
 min(report_matrix)
-
 which(report_matrix == min(report_matrix), arr.ind = TRUE)
+report_matrix[6, 7]
 
-report_matrix[2, 3]
+# The above part may not be very useful though.  Each row represents a random split,
+#  so we would not want to select that except maybe in very narrow teaching examples
+#  or if we were trying to cheat at Kaggle or something.
 
+# Instead, it may be more useful to look at the column means.  Each column mean is 
+#  the average performance across each value of mtry which is the number of variables
+#  in each random forest.  Averaging the performance of this across 10 different
+#  random splits should improve the applicability of what we are finding.
+mean_for_mtry = apply(report_matrix, MARGIN = 2, FUN = mean)
+which.min(mean_for_mtry)
+mean_for_mtry
 
-
-
-report_dataframe = data.frame(report_matrix)
-
-rownames(report_dataframe)
-orig_colnames = colnames(report_dataframe)
-#orig_colnames
-
-new_colnames = sub(".", "", colnames(report_dataframe))
-#new_colnames
-transformed_colnames = as.numeric(new_colnames) * 25
-#transformed_colnames
-colnames(report_dataframe) <- transformed_colnames
-
-names(report_dataframe)
-
-library(tidyr)
-
-
-num_param <- rownames(report_dataframe)
-
-report_dataframe$num_param = num_param
-
-
-df <- pivot_longer(report_dataframe,
-                   cols = 1:(ncol(report_dataframe) - 1),
-                   names_to = "num_trees",
-                   values_to = "mse")
-
-df
-
-library(rgl)
-
-
-# Plot
-par(mar=c(0,0,0,0))
-plot3d( 
-  x = df$num_param,
-  y = df$num_trees,
-  z = df$mse,
-  type = 's',
-  radius = 10,
-  xlab="Number of Parameters", ylab="Number of Trees", zlab="Mean-Squared Error")
-writeWebGL( filename="HtmlWidget/3dscatter.html" ,  width=600, height=600)
-
-
-# Library
-library(plotly)
-
-
-q <- plot_ly(z = report_matrix, type = "surface")
-q
-
-result_location
-result_location[1]
-result_location[2]
-
-which(report_matrix == min(report_matrix), arr.ind = TRUE)
-result = round(min(report_matrix), 3)
-result_location = which(report_matrix == min(report_matrix), arr.ind = TRUE)
-
-print(paste0("The best result, ", result, " is found with num_param = ", result_location[1], " and num_trees = ",
-            result_location[2] * 25, ". This is a little surprising because it is not using that many trees.  ",
-            "This result may change if one took multiple samples on different ",
-             "seeds instead of just using one sample from one random seed."))
+# With this, we get that the lowest is the version with 8 parameters tried instead of 10
+# as we did with just one sample of the data.
