@@ -114,9 +114,9 @@ for (i in 1:i_max){
 
 report_matrix
 min(report_matrix)
-which(report_matrix == min(report_matrix), arr.ind = TRUE)
-#10, 91
-report_matrix[which(report_matrix == min(report_matrix), arr.ind = TRUE)]
+which(report_matrix == min(report_matrix), arr.ind = TRUE)#10, 91
+report_matrix[which(report_matrix == min(report_matrix), arr.ind = 
+TRUE)]
 
 mean_for_shrinkage = apply(report_matrix, MARGIN = 2, FUN = mean)
 which.min(mean_for_shrinkage)
@@ -146,9 +146,9 @@ MSE_ols = mean((y_hat - test_hitters$Salary)^2)
    # From chapter 6
 library(glmnet)
 
-x_train = model.matrix(object = as.formula("Salary ∼ ."),
+x_train = model.matrix(object = as.formula("Salary ~ ."),
                  data = training_hitters)[ , -1]
-x_test = model.matrix(object = as.formula("Salary ∼ ."),
+x_test = model.matrix(object = as.formula("Salary ~ ."),
                        data = test_hitters)[ , -1]
 y_train = training_hitters$Salary
 y_test  = test_hitters$Salary
@@ -167,11 +167,35 @@ cat(paste0("MSE_gbm = ", MSE_gbm,
 
 # (f) Which variables appear to be the most important predictors in
 # the boosted model?
+print("Here are all of the variables in the model and their relative importances:  ")
+summary(boost_hitters)
 
+print("Here are the top-5 variables in the model and their relative importances:  ")
+summary(boost_hitters)[1:5, ]
 
+print(paste0("Career at-Bats is the highest predictor of salary.  This kind of proxies for how long someone has been",
+      " in the league as well as if they are decent.  A long-time backup player wouldn't have a high value for this, ",
+      "but neither would a rookie."))
 
 
 # (g) Now apply bagging to the training set. What is the test set MSE
-# for this approach? 
+# for this approach?
 
+library(randomForest)
+bag_hitters = randomForest(Salary ~ .,
+                           data = training_hitters,
+                           mtry = ncol(training_hitters) - 1,
+                           importance = TRUE)
+
+
+y_hat_bag = predict(bag_hitters, newdata = test_hitters)
+MSE_bag = mean((y_hat_bag - test_hitters$Salary)^2)
+
+
+cat(paste0("MSE_gbm = ", MSE_gbm,
+           "\nMSE_ols = ", MSE_ols,
+           "\nMSE_ridge = ", MSE_ridge,
+           "\nMSE_bag = ", MSE_bag))
+
+print("I'm not sure why the bagged model is better than the gbm here....")
 
