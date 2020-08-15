@@ -1,6 +1,6 @@
 # This problem involves the OJ data set which is part of the ISLR
 # package.
- 
+
 library(ISLR)
 library(e1071)
  
@@ -14,9 +14,9 @@ training_sample_proportion = training_sample_size/N
 
 #### Sourcing the my_sample function.
 # On silver personal laptop
-# path <- "C:\\Users\\Austin\\Documents\\ISLR_Labs\\MyWork"
+ path <- "C:\\Users\\Austin\\Documents\\ISLR_Labs\\MyWork"
 # On work computer, 
-   path <- 'P:\\AccountFinance\\Planning\\Private\\Strategy&Loyalty\\Users\\Austin Frazer\\Data_Science_Practice\\ISLR_Labs\\islr_practice'
+#   path <- 'P:\\AccountFinance\\Planning\\Private\\Strategy&Loyalty\\Users\\Austin Frazer\\Data_Science_Practice\\ISLR_Labs\\islr_practice'
 # On black personal laptop
 #   path <- 'C:\\Users\\Team Crazer\\Documents\\data_science_practice\\ISLR\\islr_practice'
 # For other computers, uncomment these lines to get it to work
@@ -446,7 +446,7 @@ print(message)
 
 # For comparison later
 polynomial_kernel_results = c(best_cost_parameter, best_cost_error_rate_train, best_cost_error_rate_test)
-cost = 0.01)
+
 
 kernel_type = svmfit$call$kernel
 number_of_support_vectors = svmfit['tot.nSV']
@@ -571,11 +571,11 @@ polynomial_kernel_results = c(best_cost_parameter, best_cost_error_rate_train, b
 
 
 # (h) Overall, which approach seems to give the best results on this data?
-results_dataframe = data.frame(linear_kernel_results, radial_kernel_results, polynomial_kernel_results)
+results_dataframe <- data.frame(linear_kernel_results, radial_kernel_results, polynomial_kernel_results)
 row.names(results_dataframe) = c('best_cost', 'train_error_rate', 'test_error_rate')
-results_dataframe = t(results_dataframe)
+results_dataframe <- t(results_dataframe)
 
-results_dateframe
+results_dataframe
 
 best_svm_kernel_type_here = names(which.min(results_dataframe[ , 'test_error_rate']))
 
@@ -584,6 +584,3 @@ message = paste0("The best approach for this data is found in the ",
                  ".")
 
 print(message)
-
-
-
