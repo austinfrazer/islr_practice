@@ -37,6 +37,7 @@ centered_correlations <- cor(z)
 centered_Euclidean_distances <- dist(z)
 
 
+
 dim(Euclidean_distances)
 length(Euclidean_distances)
 dim(correlations)
@@ -44,7 +45,54 @@ dim(centered_correlations)
 dim(centered_Euclidean_distances)
 length(centered_Euclidean_distances)
 
+#  Adding this the next day, after looking at the solutions
+#    manual.
+centered_Euclidean_distances_squared = centered_Euclidean_distances ^ 2
+centered_correlations_of_transpose = cor(t(z))
+
+#  This is just renaming things to look like the a, b
+#  terminology from the solutions manual.
+my_a = centered_Euclidean_distances_squared
+my_b = as.dist(1- centered_correlations_of_transpose)
+summary(my_b/my_a)
+
 # May need to visit the solutions manual to take me home.
 #  I have the material, but I'm not sure how to get from a
 #  4 x 4 matrix and compare it to the results in a 1225
 #  length vector.
+
+
+# Visiting the solutions manual, I find:
+#  
+
+library(ISLR)
+
+set.seed(1)
+dsc = scale(USArrests)
+#  It turns out that my "standardize()" function was doing the 
+#   exact same thing as this built-in "scale()" function.  Neat!
+
+
+a = dist(dsc)^2
+b = as.dist(1 - cor(t(dsc)))
+summary(b/a)
+
+
+# Found a different solution here:  
+#  https://waxworksmath.com/Authors/G_M/James/Code/Chapter10/chap_10_prob_7.R
+## Scale each observation (not the features):
+#####  I think that this solution better answers the initial question.
+USA_scaled = t(scale(t(USArrests)))
+
+# The correlation of each sample with the other samples:
+# 
+Rij = cor(t(USA_scaled)) # -1 <= Rij <= +1 
+OneMinusRij = 1 - Rij # 0 <= 1-Rij <= +2 
+X = OneMinusRij[lower.tri(OneMinusRij)]
+
+D = as.matrix( dist( USA_scaled )^2 )
+Y = D[lower.tri(D)]
+
+plot( X, Y )
+
+summary( X/Y )
